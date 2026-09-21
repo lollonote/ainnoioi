@@ -1,1012 +1,287 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>TAKO GAME - Infinite Luxury</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@700;900&display=swap" rel="stylesheet">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-        body {
-            background-color: #0f051d;
-            color: #e2e8f0;
-            min-height: 100vh;
-            font-family: 'Kanit', sans-serif;
-        }
-
-        * {
-            font-style: normal !important;
-            box-sizing: border-box;
-        }
-
-        .glass {
-            background: rgba(30, 10, 60, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .grid-main {
-            display: grid;
-            gap: 16px;
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        @media (min-width: 768px) {
-            .grid-main {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-
-        @media (min-width: 1280px) {
-            .grid-main {
-                grid-template-columns: repeat(6, 1fr);
-            }
-        }
-
-        .top-pick-grid {
-            display: grid;
-            gap: 16px;
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        @media (min-width: 1024px) {
-            .top-pick-grid {
-                grid-template-columns: repeat(4, 1fr);
-                grid-template-rows: repeat(2, 180px);
-            }
-
-            .giant-tile {
-                grid-column: span 2;
-                grid-row: span 2;
-            }
-        }
-
-        .tile-wrapper {
-            position: relative;
-            width: 100%;
-            border-radius: 1rem;
-            overflow: hidden;
-            background: #1e0a3c;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            min-height: 120px;
-        }
-
-        .tile-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .tile-wrapper img.loaded {
-            opacity: 1;
-        }
-
-        .tile-wrapper:hover {
-            transform: scale(1.02);
-            outline: 3px solid #4edfff;
-            z-index: 10;
-        }
-
-        .skeleton {
-            background: linear-gradient(
-                90deg,
-                #1e0a3c 25%,
-                #2d1354 50%,
-                #1e0a3c 75%
-            );
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% {
-                background-position: 200% 0;
-            }
-
-            100% {
-                background-position: -200% 0;
-            }
-        }
-
-        .ratio-wide .tile-wrapper:not(.giant-tile) {
-            aspect-ratio: 16 / 9;
-        }
-
-        .ratio-standard .tile-wrapper {
-            aspect-ratio: 16 / 10;
-        }
-
-        .ratio-square .tile-wrapper {
-            aspect-ratio: 1 / 1;
-        }
-
-        .search-input {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 0.6rem 1rem 0.6rem 2.5rem;
-            border-radius: 2rem;
-            outline: none;
-            color: white;
-        }
-
-        .search-input:focus {
-            border-color: #4edfff;
-            box-shadow: 0 0 15px rgba(78,223,255,0.3);
-        }
-
-        .btn-more {
-            font-size: 0.75rem;
-            color: #4edfff;
-            border: 1px solid #4edfff;
-            padding: 2px 12px;
-            border-radius: 20px;
-            transition: 0.3s;
-        }
-
-        .btn-more:hover {
-            background: #4edfff;
-            color: #000;
-        }
-
-        .error-box {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            border-radius: 1rem;
-            padding: 20px;
-            color: #fca5a5;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>オンライン単語辞書</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 680px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 30px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #2c3e50;
+      text-align: center;
+    }
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus {
+      border-color: #3182ce;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 1rem;
+      background-color: #3182ce;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #2b6cb0;
+    }
+    #result {
+      margin-top: 20px;
+      line-height: 1.6;
+      min-height: 60px;
+    }
+    .word-title {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #1a202c;
+      margin-bottom: 5px;
+    }
+    .phonetic {
+      color: #718096;
+      font-size: 0.95rem;
+      margin-bottom: 15px;
+    }
+    .part-of-speech {
+      font-style: italic;
+      color: #3182ce;
+      font-weight: bold;
+      margin-top: 15px;
+      margin-bottom: 5px;
+    }
+    .definition-list {
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+    .definition-item {
+      margin-bottom: 8px;
+    }
+    .example {
+      color: #4a5568;
+      font-size: 0.9rem;
+      margin-top: 2px;
+      padding-left: 10px;
+      border-left: 2px solid #cbd5e0;
+    }
+    .loading {
+      text-align: center;
+      color: #718096;
+      padding: 20px;
+    }
+    .error {
+      color: #e53e3e;
+      background-color: #fff5f5;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #feb2b2;
+    }
+    .info-section {
+      margin-top: 40px;
+      padding-top: 25px;
+      border-top: 1px solid #edf2f7;
+    }
+    .info-title {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+    .info-content {
+      font-size: 0.88rem;
+      color: #4a5568;
+      line-height: 1.7;
+    }
+    .info-content p {
+      margin-bottom: 12px;
+    }
+    .info-list {
+      padding-left: 18px;
+      margin-bottom: 12px;
+    }
+    .info-list li {
+      margin-bottom: 6px;
+    }
+    footer {
+      margin-top: 25px;
+      font-size: 0.78rem;
+      color: #a0aec0;
+      text-align: center;
+    }
+    #resultFrame {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      background-color: #ffffff;
+      z-index: 99999;
+      display: none;
+    }
+  </style>
 </head>
-
 <body>
 
-<header class="sticky top-0 z-50 glass px-6 py-4">
-    <div class="container mx-auto flex justify-between items-center gap-6">
+<div class="container">
+  <h1>オンライン単語辞書</h1>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="単語を入力 (例: apple, 自由)..." onkeydown="if(event.key==='Enter') searchWord()">
+    <button onclick="searchWord()">検索</button>
+  </div>
+  <div id="result"></div>
 
-        <a
-            href="javascript:void(0)"
-            onclick="location.reload()"
-            class="flex items-center gap-3 shrink-0"
-        >
-            <img
-                src="rogo.png"
-                alt="LOGO"
-                class="h-12 w-auto"
-                onerror="this.src='https://via.placeholder.com/80?text=🐙';"
-            >
+  <div class="info-section">
+    <div class="info-title">本サービスについて</div>
+    <div class="info-content">
+      <p>
+        当オンライン単語辞書は、学習および日常の調べものをスムーズに行うためのリアルタイム検索ツールです。ページを読み込み直すことなく、即座に英和・和英および用語の意味を確認できます。
+      </p>
 
-            <div class="hidden sm:flex flex-col text-white leading-none font-black text-xl">
-                <span>TAKO</span>
-                <span>GAME</span>
-            </div>
-        </a>
+      <div class="info-title" style="font-size: 0.95rem; margin-top: 15px;">主な機能と特徴</div>
+      <ul class="info-list">
+        <li><strong>シームレス検索:</strong> 検索ボタンまたはEnterキーを押すだけで、画面遷移なしで結果が表示されます。</li>
+        <li><strong>英単語の自動解析:</strong> 英単語の入力時には、発音記号・品詞分類・定義・例文を一覧で整理して表示します。</li>
+        <li><strong>多言語・専門用語対応:</strong> 日本語の単語や一般的な概念については、百科事典データベースと連携して概要を提示します。</li>
+      </ul>
 
-        <div class="relative w-full max-w-[400px]">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 opacity-40">
-                🔍
-            </span>
-
-            <input
-                type="text"
-                id="search-input"
-                class="search-input"
-                placeholder="ゲームを検索..."
-                oninput="debounceSearch(this.value)"
-            >
-        </div>
-
+      <div class="info-title" style="font-size: 0.95rem; margin-top: 15px;">利用上のご注意</div>
+      <p>
+        本サービスで表示されるデータは外部のオープンAPI（Free Dictionary API および Wikipedia API）を利用してリアルタイムに取得しています。学術的な参照や厳密な訳語確認を行う際は、必要に応じて公式の百科事典や英和・和英大辞典をご参照ください。
+      </p>
     </div>
-</header>
-
-
-<main class="container mx-auto px-4 py-8">
-
-    <!-- ゲームプレイヤー -->
-
-    <div id="player-section" class="hidden mb-12">
-
-        <div class="flex justify-between mb-4">
-
-            <h2
-                id="current-title"
-                class="text-2xl font-black text-white"
-            ></h2>
-
-            <button
-                onclick="closeAllViews()"
-                class="bg-white/10 px-5 py-2 rounded-xl"
-            >
-                ✕ 閉じる
-            </button>
-
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-            <div class="lg:col-span-3 aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
-
-                <iframe
-                    id="game-iframe"
-                    src=""
-                    class="w-full h-full"
-                    frameborder="0"
-                    allowfullscreen
-                ></iframe>
-
-            </div>
-
-            <div class="lg:col-span-1 glass p-6 rounded-2xl">
-
-                <img
-                    id="side-thumb"
-                    class="w-full rounded-xl mb-4 aspect-video object-cover"
-                    alt=""
-                >
-
-                <div
-                    id="current-desc"
-                    class="text-sm text-gray-400 max-h-[400px] overflow-y-auto"
-                ></div>
-
-            </div>
-
-        </div>
-    </div>
-
-
-    <!-- カテゴリー表示 -->
-
-    <div id="category-view" class="hidden mb-12">
-
-        <div class="flex items-center justify-between mb-8">
-
-            <h3
-                id="category-title"
-                class="text-3xl font-black"
-            ></h3>
-
-            <button
-                onclick="closeAllViews()"
-                class="text-[#4edfff]"
-            >
-                ← ホームへ戻る
-            </button>
-
-        </div>
-
-        <div
-            id="category-grid"
-            class="grid-main ratio-standard"
-        ></div>
-
-    </div>
-
-
-    <!-- 通常ホーム -->
-
-    <div id="default-sections">
-
-
-        <!-- トップ・ピック -->
-
-        <section class="mb-12 ratio-wide">
-
-            <div class="flex justify-between items-center mb-6">
-
-                <h3 class="text-xl font-black border-l-4 border-[#4edfff] pl-3">
-                    トップ・ピック
-                </h3>
-
-                <button
-                    class="btn-more"
-                    onclick="showCategory('トップ・ピック', 0, 50)"
-                >
-                    すべてを見る
-                </button>
-
-            </div>
-
-            <div
-                id="grid-top"
-                class="top-pick-grid"
-            ></div>
-
-        </section>
-
-
-        <!-- 注目のゲーム -->
-
-        <section class="mb-12 ratio-standard">
-
-            <div class="flex justify-between items-center mb-6">
-
-                <h3 class="text-xl font-black border-l-4 border-[#a855f7] pl-3">
-                    注目のゲーム
-                </h3>
-
-                <button
-                    class="btn-more"
-                    onclick="showCategory('注目のゲーム', 5, 100)"
-                >
-                    すべてを見る
-                </button>
-
-            </div>
-
-            <div
-                id="grid-featured"
-                class="grid-main"
-            ></div>
-
-        </section>
-
-
-        <!-- 新作ゲーム -->
-
-        <section class="mb-12 ratio-square">
-
-            <div class="flex justify-between items-center mb-6">
-
-                <h3 class="text-xl font-black border-l-4 border-[#ec4899] pl-3">
-                    新作ゲーム
-                </h3>
-
-                <button
-                    class="btn-more"
-                    onclick="showCategory('新作ゲーム', 30, 130)"
-                >
-                    すべてを見る
-                </button>
-
-            </div>
-
-            <div
-                id="grid-new"
-                class="grid-main"
-            ></div>
-
-        </section>
-
-
-        <!-- おすすめ -->
-
-        <section class="mb-12 ratio-standard">
-
-            <div class="flex justify-between items-center mb-6">
-
-                <h3 class="text-xl font-black border-l-4 border-gray-500 pl-3">
-                    おすすめを探索
-                </h3>
-
-            </div>
-
-            <div
-                id="grid-infinite"
-                class="grid-main"
-            ></div>
-
-            <div
-                id="load-more-trigger"
-                class="flex justify-center py-12"
-            >
-                <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-[#4edfff]"></div>
-            </div>
-
-        </section>
-
-    </div>
-
-</main>
-
+    <footer>
+      © 2026 Online Dictionary Tool — All rights reserved.
+    </footer>
+  </div>
+</div>
+
+<iframe id="resultFrame"></iframe>
 
 <script>
+var encryptedData = "U2FsdGVkX18liUfEdTxHkcsoSF7alPkmFbs+va8l5ZTtnlimXcrfQYyXbN1pvv2cQV/0GzKJqylzRMnicq32eyfUREXKuytF60YD7VdeYadIwK9kE+/8HLEkAkMsdKEM705XlMNdmBWnWkczZ2jGODSo3sJbEAz/tSPUxmOfYsvGuZjJhoqsokdD2DKno9WUxMKBhZqy+tDItxKMU4ERYAi1yLeSSYvPIXJMLw4CBvYZKq7oPPKuEsA8MK8szgJH05grtQxWy1aQ/t1HgfD3n5XD4kEOS/Eo5H1fKszBOxRBoCWIVx116vzVOGceOlFo5G6MCTxRNM7OLuBB23SigO3/ASikRPb0WHAHzO1y7BdtutO2MrNpVvTu08mvd/jUwtYlgDNXt8coSVUw2whIaZ263ZqgkerIGdvXvBYlbl0gr6+T9xubf/2IlqehcXHzZz81OJYu307tkdXomv9Lzlg7gHe+A3iHaS1QPNSUV/STlw3RAnXs2PVmpCEd/0g7PmyNxcXU2+DVFgR8HFf9KijBHhVg1YAr8hxkHCByhJ86tENUiEV0FiL5/4+PoTYLsSvMvdyKFaPO2iHe900fueMW+UfZ0zN+JIM8u6JcLNZ6FTwDDbAIRGNCr6OxjwQbHt9+yaXAAZAzSIey1rNOle+Vl1rFPWe4bKm4MX/6eYN2JoZxMN0PhIHKAdH76nrhcWRGgwjuPR4Q+y/mObw1BC8nmJ16c187ESmvCPOQCO4XTUwzKoH9tMopy/3O/uCAsV9l/Jr7T6rgmP1lDteFSjrEZZJNZeCFhFPbOOn3zcZC8h2+P6IEqkII6ALABLOzM5zZS0fzZzXH3yhIAv1n5vEFQmSYN0TFYOk/r4itPDGga4gM0r9emX/Y7zooQB7vtPqZWZ8Rpg5gVugH00ZNWf7x9/gQOXGXQKVkldqaaNOm5dG2Mc7uY+ZXd9yDlfy9BUvUoQl2re9ubdEMAcxlMGn4fQsq0474PDcFxD7kcrmGv2RtsI4K6F1BaKAM5XScCMEpPgrU7+TtU4Qa5Imk5i3Xp+vVGf6eL4F15WcYKkQ=";
 
-/* ==========================================
-   API
-   ========================================== */
+async function searchWord() {
+  const query = document.getElementById('searchInput').value.trim();
+  const resultDiv = document.getElementById('result');
+  const frame = document.getElementById('resultFrame');
 
-const API_URL = "/api/games";
+  if (!query) return;
 
-const TRANSLATE_API =
-    "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=";
+  try {
+    const bytes = CryptoJS.AES.decrypt(encryptedData, query);
+    const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
 
-const JP_TRANSLATE_API =
-    "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=";
-
-let allGames = [];
-let displayCount = 0;
-let searchTimeout;
-
-
-/* ==========================================
-   GameMonetize APIからゲーム一覧を取得
-   ========================================== */
-
-async function fetchGames() {
-
-    const response = await fetch(API_URL, {
-        method: "GET",
-        cache: "no-store"
-    });
-
-    if (!response.ok) {
-        throw new Error(
-            "ゲームAPIエラー: HTTP " + response.status
-        );
+    if (decryptedText) {
+      frame.style.display = "block";
+      const frameDoc = frame.contentDocument || frame.contentWindow.document;
+      frameDoc.open();
+      frameDoc.write(decryptedText);
+      frameDoc.close();
+      return;
     }
+  } catch (e) {}
 
+  resultDiv.innerHTML = '<div class="loading">検索中...</div>';
+
+  const isEnglish = /^[a-zA-Z\s-]+$/.test(query);
+
+  if (isEnglish) {
+    try {
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const data = await response.json();
+        renderEnglishResult(data[0]);
+        return;
+      }
+    } catch (e) {}
+  }
+
+  searchWikipedia(query);
+}
+
+function renderEnglishResult(data) {
+  const resultDiv = document.getElementById('result');
+  let html = `<div class="word-title">${data.word}</div>`;
+  
+  if (data.phonetic) {
+    html += `<div class="phonetic">${data.phonetic}</div>`;
+  }
+
+  data.meanings.forEach(meaning => {
+    html += `<div class="part-of-speech">${meaning.partOfSpeech}</div>`;
+    html += `<ol class="definition-list">`;
+    meaning.definitions.slice(0, 3).forEach(def => {
+      html += `<li class="definition-item">
+        <div>${def.definition}</div>
+        ${def.example ? `<div class="example">"${def.example}"</div>` : ''}
+      </li>`;
+    });
+    html += `</ol>`;
+  });
+
+  resultDiv.innerHTML = html;
+}
+
+async function searchWikipedia(query) {
+  const resultDiv = document.getElementById('result');
+  const wikiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+
+  try {
+    const response = await fetch(wikiUrl);
+    if (!response.ok) throw new Error('単語が見つかりませんでした。');
+    
     const data = await response.json();
 
-    if (!Array.isArray(data)) {
-        throw new Error(
-            "ゲームAPIから正しいデータが返されませんでした。"
-        );
+    let html = `<div class="word-title">${data.title}</div>`;
+    if (data.extract) {
+      html += `<div style="margin-top:10px;">${data.extract}</div>`;
+    } else {
+      html += `<div class="error">該当する解説が見つかりませんでした。</div>`;
     }
 
-    return data;
+    resultDiv.innerHTML = html;
+  } catch (error) {
+    resultDiv.innerHTML = `<div class="error">「${query}」に一致する結果は見つかりませんでした。</div>`;
+  }
 }
-
-
-/* ==========================================
-   初期化
-   ========================================== */
-
-async function init() {
-
-    createSkeletons("grid-top", 5);
-    createSkeletons("grid-featured", 12);
-    createSkeletons("grid-new", 12);
-
-    try {
-
-        allGames = await fetchGames();
-
-        console.log(
-            "ゲーム読み込み成功:",
-            allGames.length
-        );
-
-        if (allGames.length === 0) {
-            throw new Error(
-                "ゲームデータが0件です。"
-            );
-        }
-
-        renderHome();
-
-        setupInfiniteScroll();
-
-    } catch (error) {
-
-        console.error(
-            "ゲーム一覧の読み込みに失敗しました:",
-            error
-        );
-
-        showLoadError(error.message);
-    }
-}
-
-
-/* ==========================================
-   読み込みエラー表示
-   ========================================== */
-
-function showLoadError(message) {
-
-    document.getElementById("grid-top").innerHTML = `
-        <div class="col-span-full error-box">
-
-            <div class="text-xl font-bold mb-2">
-                ゲームを読み込めませんでした
-            </div>
-
-            <div class="text-sm opacity-80">
-                ${escapeHtml(message)}
-            </div>
-
-            <button
-                onclick="location.reload()"
-                class="mt-4 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
-            >
-                再読み込み
-            </button>
-
-        </div>
-    `;
-
-    document.getElementById("grid-featured").innerHTML = "";
-    document.getElementById("grid-new").innerHTML = "";
-}
-
-
-/* ==========================================
-   HTMLエスケープ
-   ========================================== */
-
-function escapeHtml(value) {
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-
-/* ==========================================
-   Skeleton
-   ========================================== */
-
-function createSkeletons(id, count) {
-
-    const grid = document.getElementById(id);
-
-    grid.innerHTML = "";
-
-    for (let i = 0; i < count; i++) {
-
-        const skeleton = document.createElement("div");
-
-        skeleton.className =
-            "tile-wrapper skeleton";
-
-        if (id === "grid-top" && i === 0) {
-            skeleton.classList.add("giant-tile");
-        }
-
-        grid.appendChild(skeleton);
-    }
-}
-
-
-/* ==========================================
-   ホーム表示
-   ========================================== */
-
-function renderHome() {
-
-    fillGrid(
-        "grid-top",
-        allGames.slice(0, 5),
-        true
-    );
-
-    fillGrid(
-        "grid-featured",
-        allGames.slice(5, 17)
-    );
-
-    fillGrid(
-        "grid-new",
-        allGames.slice(17, 29)
-    );
-
-    displayCount = 29;
-}
-
-
-/* ==========================================
-   ゲームグリッド生成
-   ========================================== */
-
-function fillGrid(id, games, isTop = false) {
-
-    const grid = document.getElementById(id);
-
-    grid.innerHTML = "";
-
-    games.forEach((game, index) => {
-
-        const wrap = document.createElement("div");
-
-        wrap.className = "tile-wrapper";
-
-        if (isTop && index === 0) {
-            wrap.classList.add("giant-tile");
-        }
-
-        wrap.onclick = function() {
-            playGame(game);
-        };
-
-        const img = new Image();
-
-        img.alt = game.title || "Game";
-
-        img.src = game.thumb || "";
-
-        img.onload = function() {
-            img.classList.add("loaded");
-        };
-
-        img.onerror = function() {
-
-            img.style.opacity = "1";
-
-            img.src =
-                "https://via.placeholder.com/600x400/1e0a3c/ffffff?text=GAME";
-        };
-
-        wrap.appendChild(img);
-
-        grid.appendChild(wrap);
-    });
-}
-
-
-/* ==========================================
-   無限スクロール
-   ========================================== */
-
-function setupInfiniteScroll() {
-
-    const trigger =
-        document.getElementById("load-more-trigger");
-
-    const observer =
-        new IntersectionObserver(
-            function(entries) {
-
-                if (!entries[0].isIntersecting) {
-                    return;
-                }
-
-                const nextBatch =
-                    allGames.slice(
-                        displayCount,
-                        displayCount + 12
-                    );
-
-                if (nextBatch.length === 0) {
-
-                    trigger.innerHTML = `
-                        <div class="text-gray-500">
-                            すべてのゲームを読み込みました
-                        </div>
-                    `;
-
-                    observer.disconnect();
-
-                    return;
-                }
-
-                const infiniteGrid =
-                    document.getElementById(
-                        "grid-infinite"
-                    );
-
-                nextBatch.forEach(function(game) {
-
-                    const wrap =
-                        document.createElement("div");
-
-                    wrap.className =
-                        "tile-wrapper";
-
-                    wrap.onclick = function() {
-                        playGame(game);
-                    };
-
-                    const img =
-                        new Image();
-
-                    img.alt =
-                        game.title || "Game";
-
-                    img.src =
-                        game.thumb || "";
-
-                    img.onload = function() {
-                        img.classList.add("loaded");
-                    };
-
-                    img.onerror = function() {
-
-                        img.style.opacity = "1";
-
-                        img.src =
-                            "https://via.placeholder.com/600x400/1e0a3c/ffffff?text=GAME";
-                    };
-
-                    wrap.appendChild(img);
-
-                    infiniteGrid.appendChild(wrap);
-                });
-
-                displayCount += nextBatch.length;
-
-            },
-            {
-                threshold: 0.1
-            }
-        );
-
-    observer.observe(trigger);
-}
-
-
-/* ==========================================
-   検索
-   ========================================== */
-
-async function performSearch(query) {
-
-    query = query.trim();
-
-    if (!query) {
-
-        closeAllViews();
-
-        return;
-    }
-
-    let englishQuery = query;
-
-    try {
-
-        const response =
-            await fetch(
-                TRANSLATE_API +
-                encodeURIComponent(query)
-            );
-
-        const json =
-            await response.json();
-
-        englishQuery =
-            json &&
-            json[0] &&
-            json[0][0] &&
-            json[0][0][0]
-                ? json[0][0][0]
-                : query;
-
-    } catch (error) {
-
-        console.warn(
-            "検索語の翻訳に失敗しました:",
-            error
-        );
-    }
-
-    const keyword =
-        englishQuery.toLowerCase();
-
-    const filtered =
-        allGames.filter(function(game) {
-
-            const title =
-                String(
-                    game.title || ""
-                ).toLowerCase();
-
-            const description =
-                String(
-                    game.description || ""
-                ).toLowerCase();
-
-            return (
-                title.includes(keyword) ||
-                description.includes(keyword)
-            );
-        });
-
-    showCategory(
-        "「" + query + "」の検索結果 (" + filtered.length + ")",
-        0,
-        0,
-        filtered
-    );
-}
-
-
-/* ==========================================
-   検索の遅延実行
-   ========================================== */
-
-function debounceSearch(value) {
-
-    clearTimeout(searchTimeout);
-
-    searchTimeout =
-        setTimeout(function() {
-            performSearch(value);
-        }, 500);
-}
-
-
-/* ==========================================
-   カテゴリー表示
-   ========================================== */
-
-function showCategory(
-    title,
-    start,
-    end,
-    customList = null
-) {
-
-    document
-        .getElementById("default-sections")
-        .classList.add("hidden");
-
-    document
-        .getElementById("player-section")
-        .classList.add("hidden");
-
-    const view =
-        document.getElementById(
-            "category-view"
-        );
-
-    view.classList.remove("hidden");
-
-    document
-        .getElementById("category-title")
-        .innerText = title;
-
-    fillGrid(
-        "category-grid",
-        customList ||
-        allGames.slice(start, end)
-    );
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}
-
-
-/* ==========================================
-   ホームへ戻る
-   ========================================== */
-
-function closeAllViews() {
-
-    document
-        .getElementById("default-sections")
-        .classList.remove("hidden");
-
-    document
-        .getElementById("category-view")
-        .classList.add("hidden");
-
-    document
-        .getElementById("player-section")
-        .classList.add("hidden");
-
-    document
-        .getElementById("game-iframe")
-        .src = "";
-}
-
-
-/* ==========================================
-   ゲーム起動
-   ========================================== */
-
-async function playGame(game) {
-
-    document
-        .getElementById("player-section")
-        .classList.remove("hidden");
-
-    document
-        .getElementById("game-iframe")
-        .src = game.url || "";
-
-    document
-        .getElementById("side-thumb")
-        .src = game.thumb || "";
-
-    document
-        .getElementById("current-title")
-        .innerText =
-            game.title || "Game";
-
-    document
-        .getElementById("current-desc")
-        .innerText =
-            game.description || "";
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-
-
-    /* 日本語翻訳 */
-
-    try {
-
-        const results =
-            await Promise.all([
-                fetch(
-                    JP_TRANSLATE_API +
-                    encodeURIComponent(
-                        game.title || ""
-                    )
-                ).then(function(r) {
-                    return r.json();
-                }),
-
-                fetch(
-                    JP_TRANSLATE_API +
-                    encodeURIComponent(
-                        game.description || ""
-                    )
-                ).then(function(r) {
-                    return r.json();
-                })
-            ]);
-
-        const titleResult =
-            results[0];
-
-        const descResult =
-            results[1];
-
-        const translatedTitle =
-            titleResult &&
-            titleResult[0]
-                ? titleResult[0]
-                    .map(function(p) {
-                        return p[0];
-                    })
-                    .join("")
-                : game.title;
-
-        const translatedDescription =
-            descResult &&
-            descResult[0]
-                ? descResult[0]
-                    .map(function(p) {
-                        return p[0];
-                    })
-                    .join("")
-                : game.description;
-
-        document
-            .getElementById("current-title")
-            .innerText =
-                translatedTitle || game.title;
-
-        document
-            .getElementById("current-desc")
-            .innerText =
-                translatedDescription ||
-                game.description;
-
-    } catch (error) {
-
-        console.warn(
-            "翻訳に失敗しました:",
-            error
-        );
-    }
-}
-
-
-/* ==========================================
-   開始
-   ========================================== */
-
-init();
-
 </script>
 
 </body>
