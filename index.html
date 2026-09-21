@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TAKO GAME - Infinite Luxury</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@700;900&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            background-color: #0f051d;
+            color: #e2e8f0;
+            min-height: 100vh;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        * {
+            font-style: normal !important;
+            box-sizing: border-box;
+        }
+
+        .glass {
+            background: rgba(30, 10, 60, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .grid-main {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (min-width: 768px) {
+            .grid-main {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .grid-main {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        .top-pick-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (min-width: 1024px) {
+            .top-pick-grid {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(2, 180px);
+            }
+
+            .giant-tile {
+                grid-column: span 2;
+                grid-row: span 2;
+            }
+        }
+
+        .tile-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: 1rem;
+            overflow: hidden;
+            background: #1e0a3c;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 120px;
+        }
+
+        .tile-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .tile-wrapper img.loaded {
+            opacity: 1;
+        }
+
+        .tile-wrapper:hover {
+            transform: scale(1.02);
+            outline: 3px solid #4edfff;
+            z-index: 10;
+        }
+
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                #1e0a3c 25%,
+                #2d1354 50%,
+                #1e0a3c 75%
+            );
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .ratio-wide .tile-wrapper:not(.giant-tile) {
+            aspect-ratio: 16 / 9;
+        }
+
+        .ratio-standard .tile-wrapper {
+            aspect-ratio: 16 / 10;
+        }
+
+        .ratio-square .tile-wrapper {
+            aspect-ratio: 1 / 1;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            border-radius: 2rem;
+            outline: none;
+            color: white;
+        }
+
+        .search-input:focus {
+            border-color: #4edfff;
+            box-shadow: 0 0 15px rgba(78,223,255,0.3);
+        }
+
+        .btn-more {
+            font-size: 0.75rem;
+            color: #4edfff;
+            border: 1px solid #4edfff;
+            padding: 2px 12px;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .btn-more:hover {
+            background: #4edfff;
+            color: #000;
+        }
+
+        .error-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 1rem;
+            padding: 20px;
+            color: #fca5a5;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="sticky top-0 z-50 glass px-6 py-4">
+    <div class="container mx-auto flex justify-between items-center gap-6">
+
+        <a
+            href="javascript:void(0)"
+            onclick="location.reload()"
+            class="flex items-center gap-3 shrink-0"
+        >
+            <img
+                src="rogo.png"
+                alt="LOGO"
+                class="h-12 w-auto"
+                onerror="this.src='https://via.placeholder.com/80?text=🐙';"
+            >
+
+            <div class="hidden sm:flex flex-col text-white leading-none font-black text-xl">
+                <span>TAKO</span>
+                <span>GAME</span>
+            </div>
+        </a>
+
+        <div class="relative w-full max-w-[400px]">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 opacity-40">
+                🔍
+            </span>
+
+            <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="ゲームを検索..."
+                oninput="debounceSearch(this.value)"
+            >
+        </div>
+
+    </div>
+</header>
+
+
+<main class="container mx-auto px-4 py-8">
+
+    <!-- ゲームプレイヤー -->
+
+    <div id="player-section" class="hidden mb-12">
+
+        <div class="flex justify-between mb-4">
+
+            <h2
+                id="current-title"
+                class="text-2xl font-black text-white"
+            ></h2>
+
+            <button
+                onclick="closeAllViews()"
+                class="bg-white/10 px-5 py-2 rounded-xl"
+            >
+                ✕ 閉じる
+            </button>
+
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+            <div class="lg:col-span-3 aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
+
+                <iframe
+                    id="game-iframe"
+                    src=""
+                    class="w-full h-full"
+                    frameborder="0"
+                    allowfullscreen
+                ></iframe>
+
+            </div>
+
+            <div class="lg:col-span-1 glass p-6 rounded-2xl">
+
+                <img
+                    id="side-thumb"
+                    class="w-full rounded-xl mb-4 aspect-video object-cover"
+                    alt=""
+                >
+
+                <div
+                    id="current-desc"
+                    class="text-sm text-gray-400 max-h-[400px] overflow-y-auto"
+                ></div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- カテゴリー表示 -->
+
+    <div id="category-view" class="hidden mb-12">
+
+        <div class="flex items-center justify-between mb-8">
+
+            <h3
+                id="category-title"
+                class="text-3xl font-black"
+            ></h3>
+
+            <button
+                onclick="closeAllViews()"
+                class="text-[#4edfff]"
+            >
+                ← ホームへ戻る
+            </button>
+
+        </div>
+
+        <div
+            id="category-grid"
+            class="grid-main ratio-standard"
+        ></div>
+
+    </div>
+
+
+    <!-- 通常ホーム -->
+
+    <div id="default-sections">
+
+
+        <!-- トップ・ピック -->
+
+        <section class="mb-12 ratio-wide">
+
+            <div class="flex justify-between items-center mb-6">
+
+                <h3 class="text-xl font-black border-l-4 border-[#4edfff] pl-3">
+                    トップ・ピック
+                </h3>
+
+                <button
+                    class="btn-more"
+                    onclick="showCategory('トップ・ピック', 0, 50)"
+                >
+                    すべてを見る
+                </button>
+
+            </div>
+
+            <div
+                id="grid-top"
+                class="top-pick-grid"
+            ></div>
+
+        </section>
+
+
+        <!-- 注目のゲーム -->
+
+        <section class="mb-12 ratio-standard">
+
+            <div class="flex justify-between items-center mb-6">
+
+                <h3 class="text-xl font-black border-l-4 border-[#a855f7] pl-3">
+                    注目のゲーム
+                </h3>
+
+                <button
+                    class="btn-more"
+                    onclick="showCategory('注目のゲーム', 5, 100)"
+                >
+                    すべてを見る
+                </button>
+
+            </div>
+
+            <div
+                id="grid-featured"
+                class="grid-main"
+            ></div>
+
+        </section>
+
+
+        <!-- 新作ゲーム -->
+
+        <section class="mb-12 ratio-square">
+
+            <div class="flex justify-between items-center mb-6">
+
+                <h3 class="text-xl font-black border-l-4 border-[#ec4899] pl-3">
+                    新作ゲーム
+                </h3>
+
+                <button
+                    class="btn-more"
+                    onclick="showCategory('新作ゲーム', 30, 130)"
+                >
+                    すべてを見る
+                </button>
+
+            </div>
+
+            <div
+                id="grid-new"
+                class="grid-main"
+            ></div>
+
+        </section>
+
+
+        <!-- おすすめ -->
+
+        <section class="mb-12 ratio-standard">
+
+            <div class="flex justify-between items-center mb-6">
+
+                <h3 class="text-xl font-black border-l-4 border-gray-500 pl-3">
+                    おすすめを探索
+                </h3>
+
+            </div>
+
+            <div
+                id="grid-infinite"
+                class="grid-main"
+            ></div>
+
+            <div
+                id="load-more-trigger"
+                class="flex justify-center py-12"
+            >
+                <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-[#4edfff]"></div>
+            </div>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<script>
+
+/* ==========================================
+   API
+   ========================================== */
+
+const API_URL = "/api/games";
+
+const TRANSLATE_API =
+    "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=";
+
+const JP_TRANSLATE_API =
+    "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=";
+
+let allGames = [];
+let displayCount = 0;
+let searchTimeout;
+
+
+/* ==========================================
+   GameMonetize APIからゲーム一覧を取得
+   ========================================== */
+
+async function fetchGames() {
+
+    const response = await fetch(API_URL, {
+        method: "GET",
+        cache: "no-store"
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            "ゲームAPIエラー: HTTP " + response.status
+        );
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data)) {
+        throw new Error(
+            "ゲームAPIから正しいデータが返されませんでした。"
+        );
+    }
+
+    return data;
+}
+
+
+/* ==========================================
+   初期化
+   ========================================== */
+
+async function init() {
+
+    createSkeletons("grid-top", 5);
+    createSkeletons("grid-featured", 12);
+    createSkeletons("grid-new", 12);
+
+    try {
+
+        allGames = await fetchGames();
+
+        console.log(
+            "ゲーム読み込み成功:",
+            allGames.length
+        );
+
+        if (allGames.length === 0) {
+            throw new Error(
+                "ゲームデータが0件です。"
+            );
+        }
+
+        renderHome();
+
+        setupInfiniteScroll();
+
+    } catch (error) {
+
+        console.error(
+            "ゲーム一覧の読み込みに失敗しました:",
+            error
+        );
+
+        showLoadError(error.message);
+    }
+}
+
+
+/* ==========================================
+   読み込みエラー表示
+   ========================================== */
+
+function showLoadError(message) {
+
+    document.getElementById("grid-top").innerHTML = `
+        <div class="col-span-full error-box">
+
+            <div class="text-xl font-bold mb-2">
+                ゲームを読み込めませんでした
+            </div>
+
+            <div class="text-sm opacity-80">
+                ${escapeHtml(message)}
+            </div>
+
+            <button
+                onclick="location.reload()"
+                class="mt-4 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+            >
+                再読み込み
+            </button>
+
+        </div>
+    `;
+
+    document.getElementById("grid-featured").innerHTML = "";
+    document.getElementById("grid-new").innerHTML = "";
+}
+
+
+/* ==========================================
+   HTMLエスケープ
+   ========================================== */
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* ==========================================
+   Skeleton
+   ========================================== */
+
+function createSkeletons(id, count) {
+
+    const grid = document.getElementById(id);
+
+    grid.innerHTML = "";
+
+    for (let i = 0; i < count; i++) {
+
+        const skeleton = document.createElement("div");
+
+        skeleton.className =
+            "tile-wrapper skeleton";
+
+        if (id === "grid-top" && i === 0) {
+            skeleton.classList.add("giant-tile");
+        }
+
+        grid.appendChild(skeleton);
+    }
+}
+
+
+/* ==========================================
+   ホーム表示
+   ========================================== */
+
+function renderHome() {
+
+    fillGrid(
+        "grid-top",
+        allGames.slice(0, 5),
+        true
+    );
+
+    fillGrid(
+        "grid-featured",
+        allGames.slice(5, 17)
+    );
+
+    fillGrid(
+        "grid-new",
+        allGames.slice(17, 29)
+    );
+
+    displayCount = 29;
+}
+
+
+/* ==========================================
+   ゲームグリッド生成
+   ========================================== */
+
+function fillGrid(id, games, isTop = false) {
+
+    const grid = document.getElementById(id);
+
+    grid.innerHTML = "";
+
+    games.forEach((game, index) => {
+
+        const wrap = document.createElement("div");
+
+        wrap.className = "tile-wrapper";
+
+        if (isTop && index === 0) {
+            wrap.classList.add("giant-tile");
+        }
+
+        wrap.onclick = function() {
+            playGame(game);
+        };
+
+        const img = new Image();
+
+        img.alt = game.title || "Game";
+
+        img.src = game.thumb || "";
+
+        img.onload = function() {
+            img.classList.add("loaded");
+        };
+
+        img.onerror = function() {
+
+            img.style.opacity = "1";
+
+            img.src =
+                "https://via.placeholder.com/600x400/1e0a3c/ffffff?text=GAME";
+        };
+
+        wrap.appendChild(img);
+
+        grid.appendChild(wrap);
+    });
+}
+
+
+/* ==========================================
+   無限スクロール
+   ========================================== */
+
+function setupInfiniteScroll() {
+
+    const trigger =
+        document.getElementById("load-more-trigger");
+
+    const observer =
+        new IntersectionObserver(
+            function(entries) {
+
+                if (!entries[0].isIntersecting) {
+                    return;
+                }
+
+                const nextBatch =
+                    allGames.slice(
+                        displayCount,
+                        displayCount + 12
+                    );
+
+                if (nextBatch.length === 0) {
+
+                    trigger.innerHTML = `
+                        <div class="text-gray-500">
+                            すべてのゲームを読み込みました
+                        </div>
+                    `;
+
+                    observer.disconnect();
+
+                    return;
+                }
+
+                const infiniteGrid =
+                    document.getElementById(
+                        "grid-infinite"
+                    );
+
+                nextBatch.forEach(function(game) {
+
+                    const wrap =
+                        document.createElement("div");
+
+                    wrap.className =
+                        "tile-wrapper";
+
+                    wrap.onclick = function() {
+                        playGame(game);
+                    };
+
+                    const img =
+                        new Image();
+
+                    img.alt =
+                        game.title || "Game";
+
+                    img.src =
+                        game.thumb || "";
+
+                    img.onload = function() {
+                        img.classList.add("loaded");
+                    };
+
+                    img.onerror = function() {
+
+                        img.style.opacity = "1";
+
+                        img.src =
+                            "https://via.placeholder.com/600x400/1e0a3c/ffffff?text=GAME";
+                    };
+
+                    wrap.appendChild(img);
+
+                    infiniteGrid.appendChild(wrap);
+                });
+
+                displayCount += nextBatch.length;
+
+            },
+            {
+                threshold: 0.1
+            }
+        );
+
+    observer.observe(trigger);
+}
+
+
+/* ==========================================
+   検索
+   ========================================== */
+
+async function performSearch(query) {
+
+    query = query.trim();
+
+    if (!query) {
+
+        closeAllViews();
+
+        return;
+    }
+
+    let englishQuery = query;
+
+    try {
+
+        const response =
+            await fetch(
+                TRANSLATE_API +
+                encodeURIComponent(query)
+            );
+
+        const json =
+            await response.json();
+
+        englishQuery =
+            json &&
+            json[0] &&
+            json[0][0] &&
+            json[0][0][0]
+                ? json[0][0][0]
+                : query;
+
+    } catch (error) {
+
+        console.warn(
+            "検索語の翻訳に失敗しました:",
+            error
+        );
+    }
+
+    const keyword =
+        englishQuery.toLowerCase();
+
+    const filtered =
+        allGames.filter(function(game) {
+
+            const title =
+                String(
+                    game.title || ""
+                ).toLowerCase();
+
+            const description =
+                String(
+                    game.description || ""
+                ).toLowerCase();
+
+            return (
+                title.includes(keyword) ||
+                description.includes(keyword)
+            );
+        });
+
+    showCategory(
+        "「" + query + "」の検索結果 (" + filtered.length + ")",
+        0,
+        0,
+        filtered
+    );
+}
+
+
+/* ==========================================
+   検索の遅延実行
+   ========================================== */
+
+function debounceSearch(value) {
+
+    clearTimeout(searchTimeout);
+
+    searchTimeout =
+        setTimeout(function() {
+            performSearch(value);
+        }, 500);
+}
+
+
+/* ==========================================
+   カテゴリー表示
+   ========================================== */
+
+function showCategory(
+    title,
+    start,
+    end,
+    customList = null
+) {
+
+    document
+        .getElementById("default-sections")
+        .classList.add("hidden");
+
+    document
+        .getElementById("player-section")
+        .classList.add("hidden");
+
+    const view =
+        document.getElementById(
+            "category-view"
+        );
+
+    view.classList.remove("hidden");
+
+    document
+        .getElementById("category-title")
+        .innerText = title;
+
+    fillGrid(
+        "category-grid",
+        customList ||
+        allGames.slice(start, end)
+    );
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+
+
+/* ==========================================
+   ホームへ戻る
+   ========================================== */
+
+function closeAllViews() {
+
+    document
+        .getElementById("default-sections")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("category-view")
+        .classList.add("hidden");
+
+    document
+        .getElementById("player-section")
+        .classList.add("hidden");
+
+    document
+        .getElementById("game-iframe")
+        .src = "";
+}
+
+
+/* ==========================================
+   ゲーム起動
+   ========================================== */
+
+async function playGame(game) {
+
+    document
+        .getElementById("player-section")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("game-iframe")
+        .src = game.url || "";
+
+    document
+        .getElementById("side-thumb")
+        .src = game.thumb || "";
+
+    document
+        .getElementById("current-title")
+        .innerText =
+            game.title || "Game";
+
+    document
+        .getElementById("current-desc")
+        .innerText =
+            game.description || "";
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+
+    /* 日本語翻訳 */
+
+    try {
+
+        const results =
+            await Promise.all([
+                fetch(
+                    JP_TRANSLATE_API +
+                    encodeURIComponent(
+                        game.title || ""
+                    )
+                ).then(function(r) {
+                    return r.json();
+                }),
+
+                fetch(
+                    JP_TRANSLATE_API +
+                    encodeURIComponent(
+                        game.description || ""
+                    )
+                ).then(function(r) {
+                    return r.json();
+                })
+            ]);
+
+        const titleResult =
+            results[0];
+
+        const descResult =
+            results[1];
+
+        const translatedTitle =
+            titleResult &&
+            titleResult[0]
+                ? titleResult[0]
+                    .map(function(p) {
+                        return p[0];
+                    })
+                    .join("")
+                : game.title;
+
+        const translatedDescription =
+            descResult &&
+            descResult[0]
+                ? descResult[0]
+                    .map(function(p) {
+                        return p[0];
+                    })
+                    .join("")
+                : game.description;
+
+        document
+            .getElementById("current-title")
+            .innerText =
+                translatedTitle || game.title;
+
+        document
+            .getElementById("current-desc")
+            .innerText =
+                translatedDescription ||
+                game.description;
+
+    } catch (error) {
+
+        console.warn(
+            "翻訳に失敗しました:",
+            error
+        );
+    }
+}
+
+
+/* ==========================================
+   開始
+   ========================================== */
+
+init();
+
+</script>
+
+</body>
+</html>
